@@ -8,3 +8,10 @@ calcMetric = 'Calculated'
 
 # sql db params
 _connection_string = 'Server=localhost\SQLEXPRESS;Database=master;Trusted_Connection=True;'
+
+
+#Q_learning params
+N = 96
+epsilon = 0.1
+epoch = 200
+reward = 0.1

@@ -1,3 +1,6 @@
+# Module for CRUD sql data
+#use add, get, update, delete, clear for changing values in tables
+
 import pyodbc
 import Params
 from datetime import datetime as dt
@@ -40,8 +43,8 @@ def getUtilityId(data_id, value):
     cursor.execute(query)
     return int(cursor[0])
 
-def delete(id, table):
-    query = f'DELETE FROM {table} WHERE {table}.Id = {id}'
+def delete(id, table, content):
+    query = f'DELETE {content} FROM {table} WHERE {table}.Id = {id}'
     cursor.execute(query)
     print(f'[{dt.now().strftime("%H:%M:%S")}] Value from {table} id = {id} deleted')
 

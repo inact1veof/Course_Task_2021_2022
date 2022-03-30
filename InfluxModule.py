@@ -1,3 +1,7 @@
+# Module for work with timeseries
+#use init, create_database
+#after you can use each method
+
 from datetime import datetime as dt
 import time
 from pytz import timezone
@@ -9,7 +13,7 @@ from math import ceil
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-global client
+client = InfluxDBClient(host=Params._host_influx, port=Params._port_influx)
 metricImport = []
 metricCalc = []
 
@@ -20,6 +24,7 @@ def init():
     metricCalc = [Params.calcMetric]
 
 def crate_database():
+    client = InfluxDBClient(host=Params._host_influx, port=Params._port_influx)
     client.create_database(Params._dbname_influx)
     client.drop_database(Params._dbname_influx)
     client.create_database(Params._dbname_influx)
@@ -37,7 +42,7 @@ def parting(xs, parts):
     part_len = ceil(len(xs) / parts)
     return [xs[part_len * k:part_len * (k + 1)] for k in range(parts)]
 
-def transform_to_influx(df, metric):
+def transform_to_influx(df, metric= [Params.importMetric]):
     points = []
     fields_coll = list(df.columns.values)[0:]
     epoch_naive = dt.utcfromtimestamp(60 * 60)
@@ -64,6 +69,8 @@ def transform_to_influx(df, metric):
     return points
 
 def write_data_to_influx(link):
+    client = InfluxDBClient(host=Params._host_influx, port=Params._port_influx)
+    client.switch_database(Params._dbname_influx)
     df = get_data_from_other(link)
     points = transform_to_influx(df)
     print(f'[{dt.now().strftime("%H:%M:%S")}] Making batches')
@@ -78,10 +85,15 @@ def write_data_to_influx(link):
     print(f'[{dt.now().strftime("%H:%M:%S")}] All data was added')
 
 def write_points(points):
+    client = InfluxDBClient(host=Params._host_influx, port=Params._port_influx)
+    client.switch_database(Params._dbname_influx)
+    print(points[1])
     points_to_write = parting(points, 10)
+    print('разделили поинты')
     print(f'[{dt.now().strftime("%H:%M:%S")}] Recording to InfluxDB')
     for i in range(len(points_to_write)):
         response = client.write_points(points_to_write[i])
+        print('записывается')
         if (response == False):
             print(f'[{dt.now().strftime("%H:%M:%S")}] Write error')
         else:
@@ -109,6 +121,7 @@ def transform_to_dataframe(response, params, metric):
     return result
 
 def clear_data_influx():
+    client = InfluxDBClient(host=Params._host_influx, port=Params._port_influx)
     client.create_database(Params._dbname_influx)
     client.drop_database(Params._dbname_influx)
     client.create_database(Params._dbname_influx)
