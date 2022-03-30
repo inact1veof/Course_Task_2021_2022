@@ -13,5 +13,5 @@ _connection_string = 'Server=localhost\SQLEXPRESS;Database=master;Trusted_Connec
 #Q_learning params
 N = 96
 epsilon = 0.1
-epoch = 200
+epoch = 25
 reward = 0.1

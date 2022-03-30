@@ -89,11 +89,9 @@ def write_points(points):
     client.switch_database(Params._dbname_influx)
     print(points[1])
     points_to_write = parting(points, 10)
-    print('разделили поинты')
     print(f'[{dt.now().strftime("%H:%M:%S")}] Recording to InfluxDB')
     for i in range(len(points_to_write)):
         response = client.write_points(points_to_write[i])
-        print('записывается')
         if (response == False):
             print(f'[{dt.now().strftime("%H:%M:%S")}] Write error')
         else:

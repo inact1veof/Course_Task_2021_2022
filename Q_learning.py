@@ -35,23 +35,23 @@ class QLearning:
 
     def predict(self, dataframe):
         states_for_predict = MakeStateVec(dataframe)
-        print(len(states_for_predict))
+        self.counter = 31
         for i in range(len(states_for_predict)):
             self.state = states_for_predict[i]
-            tmp = np.array(states_for_predict)
-            tmp = tmp[i]
+            tmp = np.array(self.state)
             tmp_st = np.array(self.states)
-            q_table_line = find_index(tmp_st, tmp)[0]
+            q_table_line = self.counter
             max = np.max(self.q_table[q_table_line])
             index, = np.where(self.q_table[q_table_line] == max)
             u_opt = self.actions[index[0]]
             utility = self.calc_utility(u_opt)
             self.vec_u_opt.append(u_opt)
             self.utility_history.append(utility)
+            self.counter += 1
         return self.vec_u_opt
 
     def calc_utility(self, u_opt):
-        return Metrics.Caclucate_Utility_For_Point(self.states,self.state, u_opt)
+        return Metrics.Caclucate_Utility_For_Point(self.states,self.state, u_opt, self.counter)
 
     def getState(self):
         res = self.states[self.counter]
@@ -109,15 +109,15 @@ def Init(df, param):
         model = QLearning(eps=Params.epsilon, epoch=Params.epoch, states=States, actions=Actions, reward=Params.reward,
                           q_table=Q_Table_load, data=df)
         start = df_original['date_time'][0]
-        stop = df_original['date_time'][df_original.shape[0]-1]
+        stop = df_original['date_time'][df.shape[0]-1]
         print(f'[{dt.now().strftime("%H:%M:%S")}] Making forecast for dates: {start} to {stop}')
         print(f'[{dt.now().strftime("%H:%M:%S")}] Calculating u_opt with {df.shape[0]} points')
         result = model.predict(df)
-        print('предикт пройден')
         Utility_History = model.utility_history
         print(f'[{dt.now().strftime("%H:%M:%S")}] Final! Writing to Inlfux Database')
         data_for_export = Transform_Data(df_original, result, Utility_History)
         Write_to_db(data_for_export)
+        print(f'[{dt.now().strftime("%H:%M:%S")}] Done')
 
 
 def Write_to_db(data):
@@ -129,7 +129,6 @@ def asvoid(arr):
     return arr.view(np.dtype((np.void, arr.dtype.itemsize * arr.shape[-1])))
 
 def find_index(arr, x):
-    print('зашли в find index')
     arr_as1d = asvoid(arr)
     x = asvoid(x)
     return np.nonzero(arr_as1d == x)[0]
@@ -143,9 +142,9 @@ def SaveQ_table(model):
     np.save('q_table', q_table)
 
 def Transform_Data(df_with_dt, vec_u_opt, utility_history):
-    temp = pd.DataFrame(columns=['date', 'time', 'u_opt', 'utility'])
+    temp = pd.DataFrame(columns=['date_time','0' 'u_opt', 'utility'])
     for i in range(len(vec_u_opt)):
-        point = {'date': df_with_dt['date'].iloc[i], 'time': df_with_dt['time'].iloc[i], 'u_opt': vec_u_opt[i], 'utility': utility_history[i]}
+        point = {'date_time': df_with_dt['date_time'].iloc[i],'utility_total': 0, 'u_opt': vec_u_opt[i], 'utility': utility_history[i]}
         temp = temp.append(point, ignore_index=True)
     result = Metrics.Caclucate_Utility_Per_Day(temp)
     return result
